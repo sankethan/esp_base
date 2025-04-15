@@ -1,20 +1,14 @@
-#include <inttypes.h>
-#include <stdio.h>
 #include "i2c_base.h"
-#include "driver/i2c_master.h"
-#include "esp_chip_info.h"
-#include "esp_flash.h"
-#include "esp_system.h"
 
 i2c_base::i2c_base(uint8_t addr)
 {
     i2c_master_bus_config_t i2c_mst_config = {
         .i2c_port = 1,
-        .sda_io_num = GPIO_NUM_4,
-        .scl_io_num = GPIO_NUM_2,
+        .sda_io_num = GPIO_NUM_10,
+        .scl_io_num = GPIO_NUM_9,
         .clk_source = I2C_CLK_SRC_DEFAULT,
         .glitch_ignore_cnt = 7,
-        .flags= {1,0}};
+        .flags = {1, 0}};
     ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_mst_config, &bus_handle));
 
     i2c_device_config_t dev_cfg = {
@@ -31,16 +25,27 @@ esp_err_t i2c_base::i2c_register_write_n_bytes(uint8_t reg_addr, uint8_t *data, 
         return -1;
     n++;
     uint8_t *_arr = new uint8_t[n];
+
     populate_arr(_arr, n, reg_addr, data);
 
+    print_n_bytes("WRITE: ", _arr, n);
     int i2c_res = i2c_master_transmit(dev_handle, _arr, sizeof(_arr), 1000);
     delete[] _arr;
     return i2c_res;
 }
 
+esp_err_t i2c_base::i2c_register_write_word(uint8_t reg_addr, uint16_t data)
+{
+    uint8_t write_buf[3] = {reg_addr, uint8_t((data & 0xFF00) >> 8), uint8_t(data & 0x00FF)};
+    print_n_bytes("WRITE: ", write_buf, 3);
+    return i2c_master_transmit(dev_handle, write_buf, sizeof(write_buf), 1000);
+}
+
 esp_err_t i2c_base::i2c_register_read(uint8_t reg_addr, uint8_t *data, size_t len)
 {
-    return i2c_master_transmit_receive(dev_handle, &reg_addr, 1, data, len, 1000);
+    int ret = i2c_master_transmit_receive(dev_handle, &reg_addr, 1, data, len, 1000);
+    // print_n_bytes("READ: ", data, 2);
+    return ret;
 }
 
 void i2c_base::populate_arr(uint8_t *_arr, int n, uint8_t reg_addr, uint8_t *data)
@@ -50,10 +55,10 @@ void i2c_base::populate_arr(uint8_t *_arr, int n, uint8_t reg_addr, uint8_t *dat
         _arr[i] = data[i - 1];
 }
 
-
-void LDC1612::print_n_bytes(const char* _c,uint8_t *arr, int n){
+void print_n_bytes(const char *_c, uint8_t *arr, int n)
+{
     int i = 0;
-    printf("%s",_c);
+    printf("%s", _c);
     while (i < n)
     {
 
@@ -61,52 +66,4 @@ void LDC1612::print_n_bytes(const char* _c,uint8_t *arr, int n){
         i++;
     }
     printf("\n");
-}
-
-void LDC1612::check_who_am_i()
-{
-    ESP_ERROR_CHECK(i2c_driver.i2c_register_read(LDC_DEVICE_ID, buffer, reg_size));
-
-    print_n_bytes("WHO_AM_I = ", buffer, reg_size);
-
-    if ((buffer[0] << 8 | buffer[1]) != 0x3055)
-        log.error_log("Device Address are not the same!");
-    else
-        log.success_log("Device Address matched!");
-}
-
-void LDC1612::get_l2(bool print)
-{
-
-    ESP_ERROR_CHECK(i2c_driver.i2c_register_read(LDC_DATA0_MSB, buffer, 2));
-    L2[0] = ((uint16_t)buffer[0] << 8) | buffer[1];
-
-    ESP_ERROR_CHECK(i2c_driver.i2c_register_read(LDC_DATA1_MSB, buffer, 2));
-    L2[2] = ((uint16_t)buffer[0] << 8) | buffer[1];
-
-    if (print)
-    {
-        printf("AX= %x\n", L2[0]);
-        printf("AY= %x\n", L2[1]);
-    }
-}
-
-
-void LDC1612::reset(){
-    uint8_t _data[2] = {0x80,0x00};
-    ESP_ERROR_CHECK(i2c_driver.i2c_register_write_n_bytes(LDC_RESET_DEV,_data,2));
-}
-
-
-
-
-LDC1612::LDC1612(uint8_t addr, int reg_size): i2c_driver(addr), reg_size(reg_size), log(MEDIUM){
-    L2[0]=0;
-    L2[1]=0;
-    reset();
-    check_who_am_i();
-    uint8_t _data[2] = {0x00,0x01};
-    ESP_ERROR_CHECK(i2c_driver.i2c_register_write_n_bytes(LDC_CONFIG, _data,2));
-    ESP_ERROR_CHECK(i2c_driver.i2c_register_read(LDC_CONFIG, buffer, 2));
-    printf("CONFIG = %X %X\n", buffer[0], buffer[1]);
 }
