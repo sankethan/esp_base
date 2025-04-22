@@ -87,10 +87,20 @@ int LDC1612::get_channel_result(uint8_t channel, bool print)
     ESP_ERROR_CHECK(i2c_driver.i2c_register_read(LDC_DATA0_LSB+(channel*2), buffer, 2));
     uint16_t lsb_temp = ((uint16_t)buffer[0] << 8) | buffer[1];
     L2[channel] = ((uint32_t)msb_temp << 16) | lsb_temp;
+    uint32_t result = L2[channel];
+
+    // uint32_t raw_value = 0;
+    // uint16_t value = 0;
+    // i2c_driver.i2c_register_read(LDC_DATA0_MSB + (channel * 2), buffer,2);
+    // raw_value |= (uint32_t)value << 16;
+    // i2c_driver.i2c_register_read(LDC_DATA0_LSB + (channel * 2), buffer,2);
+    // raw_value |= (uint32_t)value;
+    // uint32_t result = raw_value & 0x0fffffff;
+    // parse_result_data(channel, raw_value, &result);
 
     if (print)
     {
-        printf("%ld\n",L2[channel]);
+        printf("%ld\n",result);
         // printf("AY= %lx\n", L2[1]);
     }
     return 0;
@@ -101,7 +111,7 @@ esp_err_t LDC1612::set_conversion_time(uint8_t channel, uint16_t value){
 }
 
 esp_err_t LDC1612::set_LC_stabilize_time(uint8_t channel){
-    uint16_t value = 30;
+    uint16_t value = 15;
     return i2c_driver.i2c_register_write_word(LDC_SETTLECOUNT0+channel, value);
 };
 
@@ -216,10 +226,10 @@ esp_err_t LDC1612::single_channel_config(uint8_t channel) {
     set_LC_stabilize_time(0);
 
     /*Set conversion interval time*/
-    set_conversion_time(0, 0x0546);
+    set_conversion_time(0, 0x04D3);
 
     /*Set driver current!*/
-    set_driver_current(0, 0xa000);
+    set_driver_current(0, 0x6000);
 
     /*single conversion*/
     set_mux_config(0x20c);
@@ -280,7 +290,7 @@ int LDC1612::mutiple_channel_config() {
     //set_mux_config(0x20c);
     /*start channel 0*/
     set_sensor_config(0x1601);
-    //u16 config=0x1601;
+    //uint16_t config=0x1601;
     //select_channel_to_convert(0,&config);
     return 0;
 }
