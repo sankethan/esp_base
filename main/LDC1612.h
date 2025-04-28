@@ -57,7 +57,7 @@ private:
     i2c_base i2c_driver;
     const int reg_size = 2;
     uint8_t buffer[20];
-    uint32_t L2[2];
+    
     const char *LDC_TAG ="LDC1612";
     const char *status_str[11] = {"conversion under range error", "conversion over range error",
                                   "watch dog timeout error", "Amplitude High Error",
@@ -75,8 +75,9 @@ private:
     int parse_result_data(uint8_t channel, uint32_t raw_result, uint32_t* result);
     int sensor_status_parse(uint16_t value);
 public:
+    uint32_t L2[2];
     LDC1612(uint8_t addr);
-
+    void configure();
     void get_l2(bool print);
     void get_l1(bool print);
     int get_channel_result(uint8_t channel, bool print);

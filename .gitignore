@@ -2,5 +2,6 @@ build/
 sdkconfig.ci
 sdkconfig.old
 managed_components/
-putty.log
+*.log
 *.lock 
+plot.py

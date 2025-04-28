@@ -17,6 +17,7 @@
         "string_view": "c",
         "span": "c",
         "ostream": "cpp",
-        "new": "cpp"
+        "new": "cpp",
+        "event_groups.h": "c"
     }
 }

@@ -14,13 +14,13 @@
 // LDC1612 class
 LDC1612::LDC1612(uint8_t addr) : i2c_driver(addr)
 {
-    L2[0] = 0;
-    L2[1] = 0;
+    // L2[0] = 0;
+    // L2[1] = 0;
     // reset();
-    check_who_am_i();
+    // check_who_am_i();
     // uint16_t _data = 0x1001;
 
-    single_channel_config(0);
+    // single_channel_config(0);
     
     // i2c_driver.i2c_register_write_word(LDC_CONFIG, 0x2c01);
     // ESP_ERROR_CHECK(i2c_driver.i2c_register_read(LDC_CONFIG, buffer, 2));
@@ -37,6 +37,15 @@ LDC1612::LDC1612(uint8_t addr) : i2c_driver(addr)
     // printf("CONFIG = %X %X\n", buffer[0], buffer[1]);
 }
 
+void LDC1612::configure(){
+    L2[0] = 0;
+    L2[1] = 0;
+    // reset();
+    check_who_am_i();
+    // uint16_t _data = 0x1001;
+
+    single_channel_config(0);
+}
 
 void LDC1612::get_l2(bool print)
 {
